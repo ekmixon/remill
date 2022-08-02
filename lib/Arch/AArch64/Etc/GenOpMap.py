@@ -71,7 +71,7 @@ class BaseDiagram(object):
     self.hints = {}
 
 def print_diag(diag, out):
-  out.write("// {} {}:\n".format(diag.iclass, diag.iform))
+  out.write(f"// {diag.iclass} {diag.iform}:\n")
   for i in xrange(32):
     out.write("//  {:2} {}".format(i, diag.bits[i]))
     if diag.names[i]:
@@ -172,12 +172,10 @@ def parse_asm(enc, base):
   asm_string = []
   parts = []
   for elem in enc.iterfind('asmtemplate/*'):
-    assert elem.tag == 'text' or elem.tag == 'a'
+    assert elem.tag in ['text', 'a']
     asm_string.append(elem.text)
-    text = elem.text.strip(",").strip()
-    if not text:
-      continue
-    parts.append(text)
+    if text := elem.text.strip(",").strip():
+      parts.append(text)
 
   return "".join(asm_string)
 
@@ -285,7 +283,7 @@ def parse_diagram_impl(diagram, base):
           base_index, limit_index = int(parts[2]), base_index
 
         assert num_cols == (limit_index - base_index + 1)
-      
+
       # # If this is the high component of an immediate, then add it in as if
       # # part of the immediate was being indexed.
       # elif 'imm' in name and 'hi' in name:
@@ -333,7 +331,7 @@ def parse_diagram_impl(diagram, base):
         else:
           start = high_bit - curr_bit
           text = box.attrib['psbits'][start:][-col_span]
-      
+
       seen_other_bits = True
 
       # `HINT` uses `Z`.
@@ -344,7 +342,7 @@ def parse_diagram_impl(diagram, base):
       # and those things need to magically need to be figured out by parsing
       # out stuff from the 'structured' comments. I have no idea what `N` is,
       # but it comes up with things like `LDEORAL`.
-      if 1 == col_span:
+      if col_span == 1:
         val = str(eval(text, {}, {'x': 'x', 'z': 'x', 'Z': 'x', 'N': 'x'}))
         assert len(val) == 1
         base.bits[curr_bit] = val
@@ -412,10 +410,7 @@ def parse_xml(doc):
 def chosen_to_string(num, chosen_list):
   pr = ["-"] * 32
   for i, v in enumerate(reversed(chosen_list)):
-    if num & (1 << i):
-      pr[v] = '1'
-    else:
-      pr[v] = '0'
+    pr[v] = '1' if num & (1 << i) else '0'
   return "".join(reversed(pr))
 
 # def get_bits(group, num_bits):
